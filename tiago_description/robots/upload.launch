@@ -5,12 +5,18 @@
   <arg name="ft_sensor"  default="schunk-ft"/>
   <arg name="laser_model"  default="sick-571"/>
   <arg name="camera_model"  default="orbbec-astra"/>
+  <arg name="has_rfid"  default="False"/>
+  <arg name="has_thermal_camera"  default="False"/>
+  <arg name="has_sonars"  default="True"/>
 
   <!-- Robot description -->
   <param name="robot_description"
     command="rosrun xacro xacro --inorder
     '$(find tiago_description)/robots/tiago.urdf.xacro'
     arm:=$(arg arm)
+    has_rfid:=$(arg has_rfid)
+    has_thermal_camera:=$(arg has_thermal_camera)
+    has_sonars:=$(arg has_sonars)
     end_effector:=$(arg end_effector)
     ft_sensor:=$(arg ft_sensor)
     laser_model:=$(arg laser_model)

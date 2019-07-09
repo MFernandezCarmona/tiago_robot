@@ -24,6 +24,13 @@
     <xacro:property name="is_multiple" value="$(arg multiple)" />
     <xacro:property name="nsp" value="$(arg namespace)" />
 
+    <xacro:arg name="has_rfid" default="false"/>
+    <xacro:arg name="has_sonars" default="true"/>
+    <xacro:arg name="min_frequency" default="800.0"/>
+    <xacro:arg name="max_frequency" default="920.0"/>
+    <xacro:arg name="gain" default="2.5"/>
+    <xacro:arg name="sensitivity" default="-90.0"/>
+
   <xacro:if value="${end_effector not in ['false', False, 'pal-gripper', 'pal-hey5', 'schunk-wsg']}">
     <xacro:wrong_end_effector/>
   </xacro:if>
@@ -73,7 +80,7 @@
   <xacro:include filename="$(find tiago_description)/urdf/materials.urdf.xacro" />
 
   <!-- Now we can start using the macros included above to define the actual robot -->
-  <xacro:base_sensors name="base" laser_model="$(arg laser_model)" sonars="true" microphone="true"/>
+  <xacro:base_sensors name="base" laser_model="$(arg laser_model)" sonars="$(arg has_sonars)" microphone="true"/>
   <xacro:tiago_torso name="torso" parent="base_link"/>
   <xacro:head name="head" parent="torso_lift_link" camera_model="$(arg camera_model)"/>
   <xacro:if value="${has_arm}">
@@ -104,6 +111,55 @@
     </link>
   </xacro:if>
 
+  <!-- RFID reader -->
+  <xacro:if value="$(arg has_rfid)">
+    <link name="rfid_reader_link">
+      <collision name="reader_collision">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <!-- mesh filename="model://antenna/antenna.stl"/ -->
+          <mesh scale="0.5 0.5 0.5" filename="package://gazebo_rfid_node/models/antenna/antenna.stl"/>
+        </geometry>
+      </collision>
+
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <!-- mesh filename="model://antenna/antenna.stl"/ -->
+          <mesh scale="0.5 0.5 0.5" filename="package://gazebo_rfid_node/models/antenna/antenna.stl"/>
+        </geometry>
+      </visual>
+
+      <inertial>
+        <mass value="1e-5" />
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+      </inertial>
+    </link>
+
+    <joint name="base_sens_rfid" type="fixed">
+      <parent link="torso_lift_link"/>
+      <child link="rfid_reader_link"/>
+      <axis xyz="0 1 0" />
+      <origin xyz="0.30 0 -.30" rpy="0 0 0"/>
+    </joint>
+
+    <gazebo reference="rfid_reader_link">
+      <sensor name="tiago_rfid_reader_sensor" type="wireless_receiver">
+        <pose>0 0 0 0 0 0</pose>
+        <visualize>true</visualize>
+        <update_rate>40</update_rate>
+        <always_on>1</always_on>
+        <transceiver>
+          <min_frequency>$(arg min_frequency)</min_frequency>
+          <max_frequency>$(arg max_frequency)</max_frequency>
+          <gain>$(arg gain)</gain>
+          <sensitivity>$(arg sensitivity)</sensitivity>
+        </transceiver>
+      </sensor>
+    </gazebo>
+  </xacro:if>
+
   <!-- RGBD Laser Link -->
   <joint name="rgbd_laser_joint" type="fixed">
       <parent link="base_footprint"/>
@@ -119,5 +175,3 @@
   </link>
 
 </robot>
-
-
